@@ -1,0 +1,43 @@
+[Unit]
+Description=Sophon-Stream Web Management System
+Documentation=https://github.com/sophon-stream/sophon-stream-web
+After=network.target network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sophon
+Group=sophon
+
+WorkingDirectory=/opt/sophon-stream-web
+ExecStart=/opt/sophon-stream-web/bin/sophon-stream-web --config=/opt/sophon-stream-web/config/config.json
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Restart policy
+Restart=on-failure
+RestartSec=5
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+# Resource limits
+LimitNOFILE=65535
+LimitNPROC=4096
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/sophon-stream-web/data /opt/sophon-stream-web/logs /opt/sophon-stream-web/plugins /tmp
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sophon-stream-web
+
+# Environment
+Environment=LD_LIBRARY_PATH=/opt/sophon-stream/lib:/usr/local/lib
+Environment=HOME=/opt/sophon-stream-web
+
+[Install]
+WantedBy=multi-user.target

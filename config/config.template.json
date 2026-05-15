@@ -1,0 +1,96 @@
+{
+  "// ============================================================": "",
+  "// Sophon-Stream Web Management System Configuration Template": "",
+  "// Copy this file to config.json and modify as needed         ": "",
+  "// ============================================================": "",
+
+  "// ── Server Listener ──────────────────────────────────────": "",
+  "listeners": [{
+    "// address": "Bind address: 0.0.0.0 for all interfaces, 127.0.0.1 for localhost only",
+    "address": "0.0.0.0",
+    "// port": "HTTP server port (default: 8080)",
+    "port": 8080
+  }],
+
+  "// ── Application Settings ─────────────────────────────────": "",
+  "app": {
+    "// document_root": "Path to frontend static files (relative to working directory)",
+    "document_root": "./frontend/dist",
+
+    "// file_types": "Static file types that Drogon will serve directly",
+    "file_types": ["html", "js", "css", "png", "jpg", "ico", "svg", "woff2", "woff", "ttf", "json", "map"],
+
+    "log": {
+      "// log_path": "Directory for log files (relative to working directory)",
+      "log_path": "./logs",
+      "// log_level": "Logging level: TRACE, DEBUG, INFO, WARN, ERROR, FATAL",
+      "log_level": "INFO"
+    },
+
+    "db_clients": [{
+      "// name": "Database client name (used internally by Drogon)",
+      "name": "sqlite3",
+      "// rdbms": "Database type: sqlite3, postgresql, mysql",
+      "rdbms": "sqlite3",
+      "// filename": "SQLite database file path (relative to working directory)",
+      "filename": "./data/sophon_stream.db"
+    }],
+
+    "// threads_num": "Number of worker threads (0 = auto-detect based on CPU cores)",
+    "threads_num": 4,
+
+    "// run_as_daemon": "Run as background daemon (use systemd instead in production)",
+    "run_as_daemon": false
+  },
+
+  "// ── SSL/TLS Configuration ────────────────────────────────": "",
+  "ssl": {
+    "// cert": "Path to SSL certificate file (PEM format). Leave empty to disable HTTPS.",
+    "cert": "",
+    "// key": "Path to SSL private key file (PEM format). Leave empty to disable HTTPS.",
+    "key": ""
+  },
+
+  "// ── JWT Authentication ──────────────────────────────────": "",
+  "jwt": {
+    "// secret": "JWT signing secret. MUST be changed in production! Use a strong random string.",
+    "secret": "CHANGE-THIS-TO-A-STRONG-RANDOM-SECRET-IN-PRODUCTION",
+
+    "// access_token_expire_seconds": "Access token validity period (default: 24 hours)",
+    "access_token_expire_seconds": 86400,
+
+    "// refresh_token_expire_seconds": "Refresh token validity period (default: 7 days)",
+    "refresh_token_expire_seconds": 604800,
+
+    "// issuer": "JWT issuer claim",
+    "issuer": "sophon-stream-web"
+  },
+
+  "// ── CORS Configuration ──────────────────────────────────": "",
+  "cors": {
+    "// allowed_origins": "Allowed origins for CORS. Use [\"*\"] for development, restrict in production.",
+    "allowed_origins": ["*"],
+    "allowed_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "allowed_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+    "// max_age": "CORS preflight cache duration in seconds",
+    "max_age": 86400
+  },
+
+  "// ── Sophon-Stream SDK Integration ────────────────────────": "",
+  "sophon_stream": {
+    "// sdk_lib_path": "Path to sophon-stream SDK library directory",
+    "sdk_lib_path": "/opt/sophon-stream/lib",
+    "// sdk_config_path": "Path to sophon-stream SDK configuration directory",
+    "sdk_config_path": "/opt/sophon-stream/config",
+    "// default_graph_config": "Default graph configuration template (JSON object)",
+    "default_graph_config": {}
+  },
+
+  "// ── Monitor Settings ─────────────────────────────────────": "",
+  "monitor": {
+    "// broadcast_interval_ms": "WebSocket broadcast interval in milliseconds",
+    "broadcast_interval_ms": 2000,
+    "// max_ws_connections": "Maximum concurrent WebSocket connections",
+    "max_ws_connections": 100
+  }
+}

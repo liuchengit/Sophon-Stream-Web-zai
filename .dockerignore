@@ -1,0 +1,53 @@
+# Build outputs
+build/
+dist/
+out/
+
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Runtime data
+data/
+logs/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Third-party
+third_party/
+
+# Git
+.git/
+.gitattributes
+
+# Docker
+docker-compose.override.yml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Coverage
+coverage/
+*.gcov
+*.gcda
+*.gcno
+
+# Documentation build
+docs/_build/

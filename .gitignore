@@ -1,0 +1,75 @@
+# ============================================================================
+# Sophon-Stream Web Management System - .gitignore
+# ============================================================================
+
+# ── Build outputs ──────────────────────────────────────────────────────────
+build/
+dist/
+out/
+*.o
+*.obj
+*.exe
+*.so
+*.dylib
+*.a
+*.lib
+
+# ── Frontend ───────────────────────────────────────────────────────────────
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.npm
+.eslintcache
+
+# ── IDE ────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+*.sublime-project
+.clangd/
+.cache/
+
+# ── OS ─────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ── Runtime data ───────────────────────────────────────────────────────────
+data/
+logs/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+backups/
+
+# ── Dependencies ───────────────────────────────────────────────────────────
+third_party/
+vendor/
+
+# ── Coverage ───────────────────────────────────────────────────────────────
+coverage/
+*.gcov
+*.gcda
+*.gcno
+*.lcov
+
+# ── Environment ────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── Docker ─────────────────────────────────────────────────────────────────
+docker-compose.override.yml
+
+# ── Temporary files ────────────────────────────────────────────────────────
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
+*.patch
