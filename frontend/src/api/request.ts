@@ -116,16 +116,16 @@ export function get<T = any>(url: string, params?: Record<string, any>, config?:
   return service.get(url, { params, ...config }).then((res) => res.data?.data as T)
 }
 
-export function post<T = any>(url: string, data?: Record<string, any>, config?: AxiosRequestConfig): Promise<T> {
-  return service.post(url, data, config).then((res) => res.data?.data as T)
+export function post<T = any>(url: string, data?: Record<string, any>, params?: Record<string, any>, config?: AxiosRequestConfig): Promise<T> {
+  return service.post(url, data, { params, ...config }).then((res) => res.data?.data as T)
 }
 
-export function put<T = any>(url: string, data?: Record<string, any>, config?: AxiosRequestConfig): Promise<T> {
-  return service.put(url, data, config).then((res) => res.data?.data as T)
+export function put<T = any>(url: string, data?: Record<string, any>, params?: Record<string, any>, config?: AxiosRequestConfig): Promise<T> {
+  return service.put(url, data, { params, ...config }).then((res) => res.data?.data as T)
 }
 
-export function del<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
-  return service.delete(url, config).then((res) => res.data?.data as T)
+export function del<T = any>(url: string, params?: Record<string, any>, config?: AxiosRequestConfig): Promise<T> {
+  return service.delete(url, { params, ...config }).then((res) => res.data?.data as T)
 }
 
 export default service

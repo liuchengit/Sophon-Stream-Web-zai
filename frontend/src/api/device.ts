@@ -35,7 +35,7 @@ export function fetchDevices(params?: Record<string, any>) {
 }
 
 export function fetchDevice(id: number) {
-  return get<Device>(`/devices/${id}`)
+  return get<Device>('/devices', { id })
 }
 
 export function createDevice(data: DeviceFormData) {
@@ -43,21 +43,21 @@ export function createDevice(data: DeviceFormData) {
 }
 
 export function updateDevice(id: number, data: Partial<DeviceFormData>) {
-  return put<Device>(`/devices/${id}`, data)
+  return put<Device>('/devices', data, { id })
 }
 
 export function deleteDevice(id: number) {
-  return del(`/devices/${id}`)
+  return del('/devices', { id })
 }
 
 export function getDeviceStatus(id: number) {
-  return get<{ status: string; fps: number; bitrate: number }>(`/devices/${id}/status`)
+  return get<{ status: string; fps: number; bitrate: number }>('/devices/status', { id })
 }
 
 export function startStream(id: number) {
-  return post(`/devices/${id}/start`)
+  return post('/devices/start', null, { id })
 }
 
 export function stopStream(id: number) {
-  return post(`/devices/${id}/stop`)
+  return post('/devices/stop', null, { id })
 }

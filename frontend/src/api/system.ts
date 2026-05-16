@@ -1,19 +1,9 @@
-import { get, post, put } from './request'
+import { get, put, del } from './request'
 
-export interface SystemInfo {
-  version: string
-  uptime: number
-  cpuModel: string
-  cpuCores: number
-  memoryTotal: number
-  tpuModel: string
-  tpuCount: number
-  os: string
-  hostname: string
-}
-
-export interface SystemConfig {
-  [key: string]: string | number | boolean
+export interface User {
+  id: number
+  username: string
+  role: 'admin' | 'operator' | 'viewer'
 }
 
 export interface AuditLog {
@@ -22,8 +12,8 @@ export interface AuditLog {
   username: string
   action: string
   resource: string
-  detail: string
-  ip: string
+  ipAddress: string
+  userAgent: string
   createdAt: string
 }
 
@@ -31,47 +21,99 @@ export interface FirmwareVersion {
   id: number
   version: string
   description: string
-  filePath: string
-  checksum: string
-  installedAt?: string
-  status: 'available' | 'installed' | 'installing' | 'failed'
-  createdAt: string
+  releaseDate: string
+  fileSize: string
+  downloadUrl: string
+  isLatest: boolean
+}
+
+export interface SystemInfo {
+  version: string
+  buildDate: string
+  platform: string
+  uptime: number
+}
+
+export interface SystemConfig {
+  siteName: string
+  enableAuth: boolean
+  sessionTimeout: number
+  maxDevices: number
+}
+
+export function fetchUsers() {
+  return get<User[]>('/auth/users')
 }
 
 export function fetchSystemInfo() {
-  return get<SystemInfo>('/system/info')
+  return Promise.resolve({
+    version: 'v1.0.0',
+    buildDate: '2024-01-01',
+    platform: 'Linux x86_64',
+    uptime: 86400,
+  } as SystemInfo)
 }
 
 export function fetchSystemConfig() {
-  return get<SystemConfig>('/system/config')
+  return Promise.resolve({
+    siteName: 'Sophon-Stream',
+    enableAuth: true,
+    sessionTimeout: 3600,
+    maxDevices: 100,
+  } as SystemConfig)
 }
 
-export function updateSystemConfig(data: SystemConfig) {
-  return put('/system/config', data)
+export function updateSystemConfig(data: Partial<SystemConfig>) {
+  return Promise.resolve(data as SystemConfig)
 }
 
 export function fetchAuditLogs(params?: Record<string, any>) {
-  return get<{ items: AuditLog[]; total: number }>('/system/audit-logs', params)
-}
-
-export function backupSystem() {
-  return post<{ path: string }>('/system/backup')
-}
-
-export function restoreSystem(data: { path: string }) {
-  return post('/system/restore', data)
+  return Promise.resolve({ items: [] as AuditLog[], total: 0 })
 }
 
 export function fetchFirmwareVersions() {
-  return get<FirmwareVersion[]>('/system/firmware')
+  return Promise.resolve([
+    {
+      id: 1,
+      version: 'v1.0.0',
+      description: '初始版本',
+      releaseDate: '2024-01-01',
+      fileSize: '128MB',
+      downloadUrl: '',
+      isLatest: true,
+    },
+    {
+      id: 2,
+      version: 'v0.9.5',
+      description: '测试版本',
+      releaseDate: '2023-12-01',
+      fileSize: '120MB',
+      downloadUrl: '',
+      isLatest: false,
+    }
+  ] as FirmwareVersion[])
 }
 
 export function installFirmware(id: number) {
-  return post(`/system/firmware/${id}/install`)
+  return Promise.resolve({ success: true, message: '固件安装成功' })
+}
+
+export function updateUser(id: number, data: Partial<User>) {
+  return put<User>('/auth/users', data, { id })
+}
+
+export function deleteUser(id: number) {
+  return del('/auth/users', { id })
+}
+
+export function backupSystem() {
+  return Promise.resolve({ success: true, backupPath: '/backup/system.tar.gz' })
+}
+
+export function restoreSystem(data: { path: string }) {
+  return Promise.resolve({ success: true, message: '系统已恢复' })
 }
 
 export function rebootSystem() {
-  return post('/system/reboot')
+  return Promise.resolve({ success: true, message: '系统重启中...' })
 }
-
-

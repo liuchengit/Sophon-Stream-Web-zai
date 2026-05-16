@@ -7,10 +7,11 @@ import { mockApiPlugin } from './mock-api'
 import path from 'path'
 
 export default defineConfig({
-  base: '/sophon/',
+  
   plugins: [
     vue(),
-    mockApiPlugin(),
+    // Disable mock API when real backend is available
+    // mockApiPlugin(),
     AutoImport({
       resolvers: [ElementPlusResolver()],
       imports: ['vue', 'vue-router', 'pinia'],
@@ -29,6 +30,18 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
+    allowedHosts: ['.monkeycode-ai.online'],
+    proxy: {
+      '/sophon/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/sophon/, ''),
+      },
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      },
+    },
   },
   css: {
     preprocessorOptions: {

@@ -204,7 +204,7 @@ const taskStatusData = computed(() => {
 const recentAlerts = computed(() => (dashboard.value.recentAlerts || []).slice(0, 10))
 
 const deviceStatusOverview = computed(() => {
-  const devices = deviceStore.devices
+  const devices = deviceStore.devices || []
   const online = devices.filter((d) => d.status === 'online').length
   const offline = devices.filter((d) => d.status === 'offline').length
   const error = devices.filter((d) => d.status === 'error').length

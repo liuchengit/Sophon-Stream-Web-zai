@@ -53,6 +53,7 @@ std::string CryptoUtils::toHex(const unsigned char* data, size_t length) {
 std::string CryptoUtils::hashPassword(const std::string& password, const std::string& salt) {
     // Combine salt + password for hashing: salt|password (prevents rainbow table attacks)
     std::string combined = salt + "|" + password;
+    spdlog::info("CryptoUtils::hashPassword: combined='{}' (len={})", combined, combined.length());
 
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned int hashLen = 0;
@@ -68,6 +69,7 @@ std::string CryptoUtils::hashPassword(const std::string& password, const std::st
         EVP_DigestUpdate(ctx, combined.data(), combined.size()) == 1 &&
         EVP_DigestFinal_ex(ctx, hash, &hashLen) == 1) {
         result = toHex(hash, hashLen);
+        spdlog::info("CryptoUtils::hashPassword: computed hash='{}' (len={})", result, result.length());
     } else {
         spdlog::error("CryptoUtils: Password hash computation failed");
     }

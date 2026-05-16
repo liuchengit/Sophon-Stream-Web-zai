@@ -3,36 +3,31 @@ import { get, post, put, del } from './request'
 export interface Task {
   id: number
   name: string
-  type: string
-  description: string
-  deviceId: number
-  deviceName?: string
-  algorithmIds: number[]
-  algorithmNames?: string[]
   status: 'running' | 'stopped' | 'paused' | 'error'
-  fps: number
+  deviceId: number
+  algorithmId: number
   config: Record<string, any>
-  roi: Record<string, any>
-  graphId?: number
+  description: string
   createdAt: string
   updatedAt: string
 }
 
 export interface TaskFormData {
   name: string
-  type: string
-  description: string
   deviceId: number
-  algorithmIds: number[]
-  config: Record<string, any>
-  roi: Record<string, any>
+  algorithmId: number
+  config?: Record<string, any>
+  description?: string
 }
 
 export interface TaskMetrics {
+  deviceId: number
+  taskId: number
   fps: number
   latency: number
-  throughput: number
-  detections: number
+  processedCount: number
+  alertCount: number
+  uptime: number
   timestamp: string
 }
 
@@ -41,7 +36,7 @@ export function fetchTasks(params?: Record<string, any>) {
 }
 
 export function fetchTask(id: number) {
-  return get<Task>(`/tasks/${id}`)
+  return get<Task>('/tasks', { id })
 }
 
 export function createTask(data: TaskFormData) {
@@ -49,37 +44,40 @@ export function createTask(data: TaskFormData) {
 }
 
 export function updateTask(id: number, data: Partial<TaskFormData>) {
-  return put<Task>(`/tasks/${id}`, data)
+  return put<Task>('/tasks', data, { id })
 }
 
 export function deleteTask(id: number) {
-  return del(`/tasks/${id}`)
+  return del('/tasks', { id })
 }
 
 export function startTask(id: number) {
-  return post(`/tasks/${id}/start`)
+  return post('/tasks/start', null, { id })
 }
 
 export function stopTask(id: number) {
-  return post(`/tasks/${id}/stop`)
+  return post('/tasks/stop', null, { id })
 }
 
 export function pauseTask(id: number) {
-  return post(`/tasks/${id}/pause`)
+  return post('/tasks/pause', null, { id })
 }
 
 export function resumeTask(id: number) {
-  return post(`/tasks/${id}/resume`)
+  return post('/tasks/resume', null, { id })
 }
 
+export function getTaskMetrics(id: number) {
+  return get<TaskMetrics>('/tasks/metrics', { id })
+}
+
+// Alias for compatibility
+export const fetchTaskMetrics = getTaskMetrics
+
 export function updateTaskConfig(id: number, config: Record<string, any>) {
-  return put(`/tasks/${id}/config`, config)
+  return put('/tasks/config', config, { id })
 }
 
 export function updateTaskROI(id: number, roi: Record<string, any>) {
-  return put(`/tasks/${id}/roi`, roi)
-}
-
-export function fetchTaskMetrics(id: number) {
-  return get<TaskMetrics>(`/tasks/${id}/metrics`)
+  return put('/tasks/roi', roi, { id })
 }

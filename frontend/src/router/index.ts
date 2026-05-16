@@ -136,7 +136,13 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory('/sophon/'),
   routes,
-  scrollBehavior: () => ({ top: 0 }),
+  scrollBehavior(to, from, savedPosition) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(savedPosition || { top: 0 })
+      }, 100)
+    })
+  },
 })
 
 // Navigation guard

@@ -11,11 +11,11 @@
       <el-menu
         :default-active="activeRoute"
         :collapse="collapsed"
-        :collapse-transition="true"
+        :collapse-transition="false"
         background-color="#0d2137"
         text-color="#b0bec5"
         active-text-color="#409EFF"
-        router
+        @select="handleMenuSelect"
       >
         <!-- 监控中心 -->
         <el-menu-item-group>
@@ -121,7 +121,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 defineProps<{
@@ -133,6 +133,7 @@ defineEmits<{
 }>()
 
 const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 
 const activeRoute = computed(() => {
@@ -142,6 +143,10 @@ const activeRoute = computed(() => {
   if (path.startsWith('/devices/') && path !== '/devices') return '/devices'
   return path
 })
+
+function handleMenuSelect(index: string) {
+  router.push(index)
+}
 </script>
 
 <style scoped lang="scss">

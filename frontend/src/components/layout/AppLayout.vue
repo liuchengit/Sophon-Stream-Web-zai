@@ -4,11 +4,7 @@
     <el-container class="main-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
       <Header @toggle-sidebar="sidebarCollapsed = !sidebarCollapsed" />
       <el-main class="main-content">
-        <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
+        <router-view />
       </el-main>
       <el-footer class="app-footer" height="32px">
         <div class="footer-content">
@@ -85,6 +81,16 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .app-layout {
   height: 100vh;
   overflow: hidden;

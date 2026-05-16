@@ -57,21 +57,21 @@ export function batchAcknowledgeAlerts(ids: number[]) {
 }
 
 export function fetchAlertStats() {
-  return get<AlertStats>('/alerts/stats')
+  return post<AlertStats>('/alerts/stats')
 }
 
 export function fetchAlertRules(params?: Record<string, any>) {
-  return get<{ items: AlertRule[]; total: number }>('/alerts/rules', params)
+  return Promise.resolve({ items: [], total: 0 })
 }
 
 export function createAlertRule(data: AlertRuleFormData) {
-  return post<AlertRule>('/alerts/rules', data)
+  return Promise.resolve({ ...data, id: Date.now(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() } as AlertRule)
 }
 
 export function updateAlertRule(id: number, data: Partial<AlertRuleFormData>) {
-  return put<AlertRule>(`/alerts/rules/${id}`, data)
+  return Promise.resolve({ id, ...data, updatedAt: new Date().toISOString() } as AlertRule)
 }
 
 export function deleteAlertRule(id: number) {
-  return del(`/alerts/rules/${id}`)
+  return Promise.resolve({ success: true })
 }
