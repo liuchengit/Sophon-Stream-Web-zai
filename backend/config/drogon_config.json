@@ -16,8 +16,7 @@
         },
         "document_root": "/workspace/frontend/dist/",
         "home_page": "index.html",
-        "use_implicit_pages": "true",
-        "pages_404": "/index.html"
+        "use_implicit_pages": "true"
     },
     "static_files": [
         {
@@ -28,12 +27,13 @@
             "allow_all": false
         },
         {
-            "uri_prefix": "/",
             "local_dir": "/workspace/frontend/dist/",
+            "uri_prefix": "",
             "is_case_sensitive": false,
             "max_age": 86400,
             "allow_all": true,
-            "default_content_type": "text/html"
+            "default_content_type": "text/html",
+            "pass_through": true
         }
     ],
     "db": {

@@ -3,11 +3,13 @@
 #include <nlohmann/json.hpp>
 #include "../database/DbManager.h"
 #include "../utils/JwtUtils.h"
+#include "../utils/CryptoUtils.h"
 #include <spdlog/spdlog.h>
 #include <algorithm>
 
 using namespace sophon_stream::web::controllers;
-using Json = nlohmann::json;
+using namespace sophon_stream::web::utils;
+using namespace sophon_stream::web::database;
 
 std::string extractToken(const drogon::HttpRequestPtr& req) {
     auto authHeader = req->getHeader("Authorization");
@@ -20,14 +22,21 @@ std::string extractToken(const drogon::HttpRequestPtr& req) {
 bool validateToken(const std::string& token, int& userId, std::string& username, std::string& role) {
     try {
         auto& jwtUtils = JwtUtils::getInstance();
-        return jwtUtils.validateToken(token, userId, username, role);
+        auto result = jwtUtils.verifyToken(token);
+        if (result.valid && !result.expired) {
+            userId = result.userId;
+            username = result.username;
+            role = result.role;
+            return true;
+        }
+        return false;
     } catch (...) {
         return false;
     }
 }
 
 drogon::HttpResponsePtr buildJsonResponse(int code, const std::string& message, const nlohmann::json& data = nlohmann::json::object(), drogon::HttpStatusCode httpCode = drogon::k200OK) {
-    Json resp;
+    nlohmann::json resp;
     resp["code"] = code;
     resp["message"] = message;
     resp["data"] = data;
@@ -63,9 +72,6 @@ void AuthCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
 
             std::string username = (*body)["username"].asString();
             std::string password = (*body)["password"].asString();
-            std::string salt = "sophon_salt";
-            std::string inputHash = salt + "|" + password;
-            for (int i = 0; i < 3; i++) inputHash = drogon::utils::getMd5(inputHash);
 
             auto result = db.find("users", "username = ?", {username});
             if (result.rows.empty()) {
@@ -74,11 +80,15 @@ void AuthCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             }
 
             const auto& row = result.rows[0];
+            std::string salt = row.at("salt");
+            std::string inputHash = CryptoUtils::hashPassword(password, salt);
+
             std::string storedHash = row.at("password_hash");
             if (inputHash != storedHash) {
                 callback(buildErrorResponse(401, "Invalid username or password", drogon::k401Unauthorized));
                 return;
             }
+            
 
             int userId = std::stoi(row.at("id"));
             std::string userRole = row.at("role");
@@ -87,12 +97,12 @@ void AuthCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             std::string accessToken = jwtUtils.generateToken(userId, username, userRole);
             std::string refreshToken = jwtUtils.generateRefreshToken(userId, username, userRole);
 
-            Json userData;
+            nlohmann::json userData;
             userData["id"] = userId;
             userData["username"] = username;
             userData["role"] = userRole;
 
-            Json data;
+            nlohmann::json data;
             data["token"] = accessToken;
             data["refreshToken"] = refreshToken;
             data["user"] = userData;
@@ -113,20 +123,21 @@ void AuthCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             
             int userId;
             std::string username, role;
-            if (!jwtUtils.validateRefreshToken(refreshToken, userId, username, role)) {
+            auto refreshResult = jwtUtils.verifyToken(refreshToken);
+            if (!refreshResult.valid || refreshResult.expired) {
                 callback(buildErrorResponse(401, "Invalid refresh token", drogon::k401Unauthorized));
                 return;
             }
 
-            std::string newAccessToken = jwtUtils.generateToken(userId, username, role);
-            std::string newRefreshToken = jwtUtils.generateRefreshToken(userId, username, role);
+            std::string newAccessToken = jwtUtils.generateToken(refreshResult.userId, refreshResult.username, refreshResult.role);
+            std::string newRefreshToken = jwtUtils.generateRefreshToken(refreshResult.userId, refreshResult.username, refreshResult.role);
 
-            Json userData;
+            nlohmann::json userData;
             userData["id"] = userId;
             userData["username"] = username;
             userData["role"] = role;
 
-            Json data;
+            nlohmann::json data;
             data["token"] = newAccessToken;
             data["refreshToken"] = newRefreshToken;
             data["user"] = userData;
@@ -144,9 +155,9 @@ void AuthCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             }
 
             auto result = db.find("users");
-            Json array = Json::array();
+            nlohmann::json array = nlohmann::json::array();
             for (const auto& row : result.rows) {
-                Json obj;
+                nlohmann::json obj;
                 obj["id"] = std::stoi(row.at("id"));
                 obj["username"] = row.at("username");
                 obj["role"] = row.at("role");
@@ -194,9 +205,9 @@ void DeviceCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
         // List devices
         if (path == "/api/v1/devices" && method == drogon::Get) {
             auto result = db.find("devices");
-            Json array = Json::array();
+            nlohmann::json array = nlohmann::json::array();
             for (const auto& row : result.rows) {
-                Json obj;
+                nlohmann::json obj;
                 obj["id"] = std::stoi(row.at("id"));
                 obj["name"] = row.at("name");
                 obj["type"] = row.at("type");
@@ -233,7 +244,7 @@ void DeviceCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             });
 
             if (result.success) {
-                Json data;
+                nlohmann::json data;
                 data["id"] = (int64_t)result.lastInsertId;
                 callback(buildJsonResponse(0, "success", data, drogon::k201Created));
             } else {
@@ -249,7 +260,7 @@ void DeviceCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
                 auto result = db.findById("devices", deviceId);
                 if (result.success && !result.rows.empty()) {
                     const auto& row = result.rows[0];
-                    Json obj;
+                    nlohmann::json obj;
                     obj["id"] = std::stoi(row.at("id"));
                     obj["name"] = row.at("name");
                     obj["type"] = row.at("type");
@@ -354,9 +365,9 @@ void TaskCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
         // List tasks
         if (path == "/api/v1/tasks" && method == drogon::Get) {
             auto result = db.find("tasks");
-            Json array = Json::array();
+            nlohmann::json array = nlohmann::json::array();
             for (const auto& row : result.rows) {
-                Json obj;
+                nlohmann::json obj;
                 obj["id"] = std::stoi(row.at("id"));
                 obj["name"] = row.at("name");
                 obj["status"] = row.at("status");
@@ -380,7 +391,7 @@ void TaskCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             int deviceId = (*body)["deviceId"].asInt();
             int algorithmId = (*body)["algorithmId"].asInt();
             std::string status = "stopped";
-            std::string config = body->isMember("config") ? (*body)["config"].dump() : "{}";
+            std::string config = body->isMember("config") ? (*body)["config"].toStyledString() : "{}";
             std::string description = body->isMember("description") ? (*body)["description"].asString() : "";
 
             auto result = db.insert("tasks", {
@@ -393,7 +404,7 @@ void TaskCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             });
 
             if (result.success) {
-                Json data;
+                nlohmann::json data;
                 data["id"] = (int64_t)result.lastInsertId;
                 callback(buildJsonResponse(0, "success", data, drogon::k201Created));
             } else {
@@ -409,7 +420,7 @@ void TaskCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
                 auto result = db.findById("tasks", taskId);
                 if (result.success && !result.rows.empty()) {
                     const auto& row = result.rows[0];
-                    Json obj;
+                    nlohmann::json obj;
                     obj["id"] = std::stoi(row.at("id"));
                     obj["name"] = row.at("name");
                     obj["status"] = row.at("status");
@@ -434,7 +445,7 @@ void TaskCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
                 std::unordered_map<std::string, std::string> updateData;
                 if (body->isMember("name")) updateData["name"] = (*body)["name"].asString();
                 if (body->isMember("status")) updateData["status"] = (*body)["status"].asString();
-                if (body->isMember("config")) updateData["config"] = (*body)["config"].dump();
+                if (body->isMember("config")) updateData["config"] = (*body)["config"].toStyledString();
                 if (body->isMember("description")) updateData["description"] = (*body)["description"].asString();
 
                 if (updateData.empty()) {
@@ -511,9 +522,9 @@ void AlgorithmCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
 
         auto& db = DbManager::getInstance();
         auto result = db.find("algorithms");
-        Json array = Json::array();
+        nlohmann::json array = nlohmann::json::array();
         for (const auto& row : result.rows) {
-            Json obj;
+            nlohmann::json obj;
             obj["id"] = std::stoi(row.at("id"));
             obj["name"] = row.at("name");
             obj["type"] = row.at("type");
@@ -543,22 +554,29 @@ void AlertCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
 
         if (path == "/api/v1/alerts") {
             auto result = db.find("alerts");
-            Json array = Json::array();
+            auto alertsArray = nlohmann::json::array();
             for (const auto& row : result.rows) {
-                Json obj;
+                auto obj = nlohmann::json::object();
                 obj["id"] = std::stoi(row.at("id"));
+                obj["taskId"] = std::stoi(row.at("task_id"));
                 obj["type"] = row.at("type");
                 obj["level"] = row.at("level");
                 obj["message"] = row.at("message");
-                obj["time"] = row.at("created_at");
-                array.push_back(obj);
+                obj["evidence"] = row.at("evidence");
+                obj["acknowledged"] = row.at("acknowledged") == "true" || row.at("acknowledged") == "1";
+                obj["acknowledgedBy"] = row.at("acknowledged_by");
+                obj["createdAt"] = row.at("created_at");
+                alertsArray.push_back(obj);
             }
-            callback(buildJsonResponse(0, "success", array));
+            auto alertsResp = nlohmann::json::object();
+            alertsResp["items"] = alertsArray;
+            alertsResp["total"] = alertsArray.size();
+            callback(buildJsonResponse(0, "success", alertsResp));
             return;
         }
 
         if (path == "/api/v1/alerts/stats") {
-            Json stats;
+            nlohmann::json stats;
             stats["todayAlerts"] = 0;
             stats["totalAlerts"] = 0;
             callback(buildJsonResponse(0, "success", stats));
@@ -567,9 +585,9 @@ void AlertCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
 
         if (path == "/api/v1/alert-rules") {
             auto result = db.find("alert_rules");
-            Json array = Json::array();
+            nlohmann::json array = nlohmann::json::array();
             for (const auto& row : result.rows) {
-                Json obj;
+                nlohmann::json obj;
                 obj["id"] = std::stoi(row.at("id"));
                 obj["name"] = row.at("name");
                 obj["type"] = row.at("type");
@@ -601,7 +619,7 @@ void MonitorCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
         auto& db = DbManager::getInstance();
 
         if (path == "/api/v1/monitor/system") {
-            Json metrics;
+            nlohmann::json metrics;
             metrics["cpuUsage"] = 45.2;
             metrics["memoryUsage"] = 62.8;
             metrics["memoryTotal"] = 16384;
@@ -625,33 +643,33 @@ void MonitorCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             }
 
             int runningTasks = 0;
-            Json taskStatusDist = Json::object();
+            nlohmann::json taskStatusDist = nlohmann::json::object();
             for (const auto& row : taskResult.rows) {
                 std::string status = row.at("status");
                 runningTasks += (status == "running" ? 1 : 0);
                 taskStatusDist[status] = taskStatusDist.value(status, 0) + 1;
             }
 
-            Json dashboard;
+            nlohmann::json dashboard;
             dashboard["totalDevices"] = totalDevices;
             dashboard["onlineDevices"] = onlineDevices;
             dashboard["runningTasks"] = runningTasks;
             dashboard["todayAlerts"] = 0;
-            dashboard["systemMetrics"] = Json{
+            dashboard["systemMetrics"] = nlohmann::json{
                 {"cpuUsage", 45.2}, {"memoryUsage", 62.8}, {"tpuUsage", 23.1}
             };
-            dashboard["recentAlerts"] = Json::array();
+            dashboard["recentAlerts"] = nlohmann::json::array();
             dashboard["taskStatusDistribution"] = taskStatusDist;
-            dashboard["alertTrend"] = Json::array();
+            dashboard["alertTrend"] = nlohmann::json::array();
             callback(buildJsonResponse(0, "success", dashboard));
             return;
         }
 
         if (path == "/api/v1/system/audit-logs") {
             auto result = db.find("audit_logs");
-            Json array = Json::array();
+            nlohmann::json array = nlohmann::json::array();
             for (const auto& row : result.rows) {
-                Json obj;
+                nlohmann::json obj;
                 obj["id"] = std::stoi(row.at("id"));
                 obj["userId"] = std::stoi(row.at("user_id"));
                 obj["username"] = row.at("username");
@@ -662,7 +680,7 @@ void MonitorCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
                 obj["createdAt"] = row.at("created_at");
                 array.push_back(obj);
             }
-            Json resp;
+            nlohmann::json resp;
             resp["items"] = array;
             resp["total"] = (int64_t)array.size();
             callback(buildJsonResponse(0, "success", resp));
@@ -670,9 +688,9 @@ void MonitorCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
         }
 
         if (path == "/api/v1/system/firmware") {
-            Json array = Json::array();
+            nlohmann::json array = nlohmann::json::array();
             // 返回模拟的固件版本数据
-            Json fw1;
+            nlohmann::json fw1;
             fw1["id"] = 1;
             fw1["version"] = "v1.0.0";
             fw1["description"] = "初始版本";
@@ -682,7 +700,7 @@ void MonitorCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             fw1["isLatest"] = true;
             array.push_back(fw1);
             
-            Json fw2;
+            nlohmann::json fw2;
             fw2["id"] = 2;
             fw2["version"] = "v0.9.5";
             fw2["description"] = "测试版本";
@@ -714,8 +732,8 @@ void PluginCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             return;
         }
 
-        Json resp;
-        resp["plugins"] = Json();
+        nlohmann::json resp;
+        resp["plugins"] = nlohmann::json();
         callback(buildJsonResponse(0, "success", resp));
 
     } catch (const std::exception& e) {
