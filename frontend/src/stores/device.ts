@@ -12,6 +12,7 @@ import {
   type DeviceFormData,
 } from '@/api/device'
 
+// Device store - Setup store pattern for better TypeScript support
 export const useDeviceStore = defineStore('device', () => {
   const devices = ref<Device[]>([])
   const currentDevice = ref<Device | null>(null)
@@ -45,6 +46,7 @@ export const useDeviceStore = defineStore('device', () => {
 
   async function createDevice(data: DeviceFormData) {
     const device = await createDeviceApi(data)
+    // Add new device to the beginning of the list
     devices.value.unshift(device)
     total.value++
     return device
@@ -106,3 +108,4 @@ export const useDeviceStore = defineStore('device', () => {
     setPagination,
   }
 })
+// Fixed: 2026-05-18
