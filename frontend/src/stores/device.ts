@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { ref } from 'vue'
 import {
   fetchDevices as fetchDevicesApi,
   fetchDevice as fetchDeviceApi,
@@ -11,96 +12,97 @@ import {
   type DeviceFormData,
 } from '@/api/device'
 
-interface DeviceState {
-  devices: Device[]
-  currentDevice: Device | null
-  total: number
-  loading: boolean
-  pagination: {
-    page: number
-    pageSize: number
+export const useDeviceStore = defineStore('device', () => {
+  const devices = ref<Device[]>([])
+  const currentDevice = ref<Device | null>(null)
+  const total = ref(0)
+  const loading = ref(false)
+  const pagination = ref({ page: 1, pageSize: 20 })
+
+  async function fetchDevices(params?: Record<string, any>) {
+    loading.value = true
+    try {
+      const result = await fetchDevicesApi({
+        page: pagination.value.page,
+        pageSize: pagination.value.pageSize,
+        ...params,
+      })
+      devices.value = result.items
+      total.value = result.total
+    } finally {
+      loading.value = false
+    }
   }
-}
 
-export const useDeviceStore = defineStore('device', {
-  state: (): DeviceState => ({
-    devices: [],
-    currentDevice: null,
-    total: 0,
-    loading: false,
-    pagination: { page: 1, pageSize: 20 },
-  }),
+  async function fetchDevice(id: number) {
+    loading.value = true
+    try {
+      currentDevice.value = await fetchDeviceApi(id)
+    } finally {
+      loading.value = false
+    }
+  }
 
-  actions: {
-    async fetchDevices(params?: Record<string, any>) {
-      this.loading = true
-      try {
-        const result = await fetchDevicesApi({
-          page: this.pagination.page,
-          pageSize: this.pagination.pageSize,
-          ...params,
-        })
-        this.devices = result.items
-        this.total = result.total
-      } finally {
-        this.loading = false
-      }
-    },
+  async function createDevice(data: DeviceFormData) {
+    const device = await createDeviceApi(data)
+    devices.value.unshift(device)
+    total.value++
+    return device
+  }
 
-    async fetchDevice(id: number) {
-      this.loading = true
-      try {
-        this.currentDevice = await fetchDeviceApi(id)
-      } finally {
-        this.loading = false
-      }
-    },
+  async function updateDevice(id: number, data: Partial<DeviceFormData>) {
+    const device = await updateDeviceApi(id, data)
+    const index = devices.value.findIndex((d) => d.id === id)
+    if (index !== -1) {
+      devices.value[index] = device
+    }
+    if (currentDevice.value?.id === id) {
+      currentDevice.value = device
+    }
+    return device
+  }
 
-    async createDevice(data: DeviceFormData) {
-      const device = await createDeviceApi(data)
-      this.devices.unshift(device)
-      this.total++
-      return device
-    },
+  async function deleteDevice(id: number) {
+    await deleteDeviceApi(id)
+    devices.value = devices.value.filter((d) => d.id !== id)
+    total.value--
+    if (currentDevice.value?.id === id) {
+      currentDevice.value = null
+    }
+  }
 
-    async updateDevice(id: number, data: Partial<DeviceFormData>) {
-      const device = await updateDeviceApi(id, data)
-      const index = this.devices.findIndex((d) => d.id === id)
-      if (index !== -1) {
-        this.devices[index] = device
-      }
-      if (this.currentDevice?.id === id) {
-        this.currentDevice = device
-      }
-      return device
-    },
+  async function startStream(id: number) {
+    await startStreamApi(id)
+    const device = devices.value.find((d) => d.id === id)
+    if (device) device.status = 'online'
+    if (currentDevice.value?.id === id) currentDevice.value.status = 'online'
+  }
 
-    async deleteDevice(id: number) {
-      await deleteDeviceApi(id)
-      this.devices = this.devices.filter((d) => d.id !== id)
-      this.total--
-      if (this.currentDevice?.id === id) {
-        this.currentDevice = null
-      }
-    },
+  async function stopStream(id: number) {
+    await stopStreamApi(id)
+    const device = devices.value.find((d) => d.id === id)
+    if (device) device.status = 'offline'
+    if (currentDevice.value?.id === id) currentDevice.value.status = 'offline'
+  }
 
-    async startStream(id: number) {
-      await startStreamApi(id)
-      const device = this.devices.find((d) => d.id === id)
-      if (device) device.status = 'online'
-      if (this.currentDevice?.id === id) this.currentDevice.status = 'online'
-    },
+  function setPagination(page: number, pageSize: number) {
+    pagination.value.page = page
+    pagination.value.pageSize = pageSize
+  }
 
-    async stopStream(id: number) {
-      await stopStreamApi(id)
-      const device = this.devices.find((d) => d.id === id)
-      if (device) device.status = 'offline'
-      if (this.currentDevice?.id === id) this.currentDevice.status = 'offline'
-    },
-
-    setPagination(page: number, pageSize: number) {
-      this.pagination.page = page
-      this.pagination.pageSize = pageSize
-    },
-  },
+  return {
+    devices,
+    currentDevice,
+    total,
+    loading,
+    pagination,
+    fetchDevices,
+    fetchDevice,
+    createDevice,
+    updateDevice,
+    deleteDevice,
+    startStream,
+    stopStream,
+    setPagination,
+  }
 })
