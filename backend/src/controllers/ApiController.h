@@ -70,7 +70,7 @@ class AlertCtrl : public drogon::HttpSimpleController<AlertCtrl> {
                                         std::function<void(const HttpResponsePtr&)>&& callback) override;
     PATH_LIST_BEGIN
     PATH_ADD("/api/v1/alerts", Get);
-    PATH_ADD("/api/v1/alerts/stats", Get);
+    PATH_ADD("/api/v1/alerts/stats", Post);
     PATH_ADD("/api/v1/alert-rules", Get);
     PATH_LIST_END
 };
