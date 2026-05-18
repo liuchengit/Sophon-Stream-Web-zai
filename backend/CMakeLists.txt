@@ -47,6 +47,7 @@ set(SOURCES
     src/utils/JwtUtils.cc
     src/utils/CryptoUtils.cc
     src/utils/ConfigUtils.cc
+    src/websocket/MonitorWsHandler.cc
     src/sophon_bridge/EngineBridge.cc
 )
 
