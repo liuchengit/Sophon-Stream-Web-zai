@@ -13,43 +13,6 @@
             "use_localtime": true,
             "log_size_limit": 10485760,
             "max_files": 5
-        },
-        "document_root": "/workspace/frontend/dist/",
-        "home_page": "index.html",
-        "use_implicit_pages": "true"
-    },
-    "static_files": [
-        {
-            "uri_prefix": "/api",
-            "local_dir": "/workspace/frontend/dist/",
-            "is_case_sensitive": false,
-            "max_age": 0,
-            "allow_all": false
-        },
-        {
-            "local_dir": "/workspace/frontend/dist/",
-            "uri_prefix": "",
-            "is_case_sensitive": false,
-            "max_age": 86400,
-            "allow_all": true,
-            "default_content_type": "text/html",
-            "pass_through": true
         }
-    ],
-    "db": {
-        "name": "default",
-        "rdbms": "sqlite3",
-        "filename": "/workspace/backend/build/data/sophon_stream.db",
-        "is_fast": false,
-        "client_encoding": "utf8",
-        "timeout": 5000,
-        "sync_mode": false,
-        "is_auto": true
-    },
-    "cors": {
-        "origins": ["*"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "headers": ["Content-Type", "Authorization", "X-Requested-With"],
-        "max_age": "86400"
     }
 }

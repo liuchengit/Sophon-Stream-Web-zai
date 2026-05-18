@@ -28,6 +28,7 @@ class AuthCtrl : public drogon::HttpSimpleController<AuthCtrl> {
     PATH_ADD("/api/v1/auth/register", Post);
     PATH_ADD("/api/v1/auth/refresh", Post);
     PATH_ADD("/api/v1/auth/users", Get);
+    PATH_ADD("/api/v1/auth/users/:id", Put, Delete);
     PATH_LIST_END
 };
 

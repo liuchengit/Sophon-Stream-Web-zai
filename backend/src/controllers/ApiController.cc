@@ -221,6 +221,60 @@ void AuthCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             return;
         }
 
+        if (path.find("/api/v1/auth/users/") == 0 && method == drogon::Put) {
+            auto parts = drogon::utils::splitString(path, "/");
+            int targetUserId = std::stoi(parts[4]);
+            int userId;
+            std::string username, role;
+            if (!validateToken(extractToken(req), userId, username, role) || role != "admin") {
+                callback(buildErrorResponse(403, "Admin access required"));
+                return;
+            }
+            auto body = req->getJsonObject();
+            // Soft delete (frontend sends {deleted: true})
+            if (body && body->isMember("deleted") && (*body)["deleted"].isBool() && (*body)["deleted"].asBool()) {
+                if (targetUserId == userId) {
+                    callback(buildErrorResponse(400, "Cannot delete yourself"));
+                    return;
+                }
+                db.remove("users", "id = ?", {std::to_string(targetUserId)});
+                callback(buildJsonResponse(0, "success", {{"id", targetUserId}}));
+                return;
+            }
+            // Normal update
+            if (body && body->isMember("role")) {
+                db.update("users", {{"role", (*body)["role"].asString()}}, "id = ?", {std::to_string(targetUserId)});
+            }
+            if (body && body->isMember("password")) {
+                auto userResult = db.find("users", "id = ?", {std::to_string(targetUserId)});
+                if (!userResult.rows.empty()) {
+                    std::string salt = userResult.rows[0].at("salt");
+                    std::string newHash = CryptoUtils::hashPassword((*body)["password"].asString(), salt);
+                    db.update("users", {{"password_hash", newHash}}, "id = ?", {std::to_string(targetUserId)});
+                }
+            }
+            callback(buildJsonResponse(0, "success", {{"id", targetUserId}}));
+            return;
+        }
+
+        if (path.find("/api/v1/auth/users/") == 0 && method == drogon::Delete) {
+            auto parts = drogon::utils::splitString(path, "/");
+            int targetUserId = std::stoi(parts[4]);
+            int userId;
+            std::string username, role;
+            if (!validateToken(extractToken(req), userId, username, role) || role != "admin") {
+                callback(buildErrorResponse(403, "Admin access required"));
+                return;
+            }
+            if (targetUserId == userId) {
+                callback(buildErrorResponse(400, "Cannot delete yourself"));
+                return;
+            }
+            db.remove("users", "id = ?", {std::to_string(targetUserId)});
+            callback(buildJsonResponse(0, "success", {{"id", targetUserId}}));
+            return;
+        }
+
         callback(buildErrorResponse(404, "Not found"));
 
     } catch (const std::exception& e) {
