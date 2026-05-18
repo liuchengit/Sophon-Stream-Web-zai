@@ -122,6 +122,49 @@ void AuthCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             return;
         }
 
+        if (path == "/api/v1/auth/register" && method == drogon::Post) {
+            auto body = req->getJsonObject();
+            if (!body) {
+                callback(buildErrorResponse(400, "Invalid JSON body"));
+                return;
+            }
+
+            std::string username = (*body)["username"].asString();
+            std::string password = (*body)["password"].asString();
+            std::string role = body->isMember("role") ? (*body)["role"].asString() : "viewer";
+
+            // Check if username already exists
+            auto existingUser = db.find("users", "username = ?", {username});
+            if (!existingUser.rows.empty()) {
+                callback(buildErrorResponse(400, "Username already exists"));
+                return;
+            }
+
+            // Generate salt and hash password
+            std::string salt = CryptoUtils::generateSalt();
+            std::string passwordHash = CryptoUtils::hashPassword(password, salt);
+
+            // Insert new user
+            auto result = db.insert("users", {
+                {"username", username},
+                {"password_hash", passwordHash},
+                {"salt", salt},
+                {"role", role}
+            });
+
+            if (result.success) {
+                nlohmann::json userData;
+                userData["id"] = (int64_t)result.lastInsertId;
+                userData["username"] = username;
+                userData["role"] = role;
+
+                callback(buildJsonResponse(0, "success", userData, drogon::k201Created));
+            } else {
+                callback(buildErrorResponse(400, "Failed to create user: " + result.errorMessage));
+            }
+            return;
+        }
+
         if (path == "/api/v1/auth/refresh" && method == drogon::Post) {
             auto body = req->getJsonObject();
             if (!body || !body->isMember("refreshToken")) {
