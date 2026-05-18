@@ -6,6 +6,17 @@
 #include "../utils/CryptoUtils.h"
 #include <spdlog/spdlog.h>
 #include <algorithm>
+static std::string getCurrentTimestamp() {
+    auto now = std::chrono::system_clock::now();
+    auto time_t_now = std::chrono::system_clock::to_time_t(now);
+    std::tm tm_now;
+    gmtime_r(&time_t_now, &tm_now);
+    char buf[64];
+    std::strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &tm_now);
+    return std::string(buf);
+}
+
+
 
 using namespace sophon_stream::web::controllers;
 using namespace sophon_stream::web::utils;
@@ -230,22 +241,45 @@ void DeviceCtrl::asyncHandleHttpRequest(const drogon::HttpRequestPtr& req,
             std::string name = (*body)["name"].asString();
             std::string type = body->isMember("type") ? (*body)["type"].asString() : "IPC";
             std::string streamUrl = body->isMember("streamUrl") ? (*body)["streamUrl"].asString() : "";
-            std::string status = body->isMember("status") ? (*body)["status"].asString() : "online";
+            std::string protocol = body->isMember("protocol") ? (*body)["protocol"].asString() : "RTSP";
+            std::string resolution = body->isMember("resolution") ? (*body)["resolution"].asString() : "";
+            int fps = body->isMember("fps") ? (*body)["fps"].asInt() : 25;
+            std::string codec = body->isMember("codec") ? (*body)["codec"].asString() : "H264";
+            std::string status = body->isMember("status") ? (*body)["status"].asString() : "offline";
             std::string location = body->isMember("location") ? (*body)["location"].asString() : "";
             std::string description = body->isMember("description") ? (*body)["description"].asString() : "";
+            std::string deviceId = body->isMember("deviceId") ? (*body)["deviceId"].asString() : "";
 
             auto result = db.insert("devices", {
                 {"name", name},
                 {"type", type},
                 {"stream_url", streamUrl},
+                {"protocol", protocol},
+                {"resolution", resolution},
+                {"fps", std::to_string(fps)},
+                {"codec", codec},
                 {"status", status},
                 {"location", location},
-                {"description", description}
+                {"description", description},
+                {"device_id", deviceId}
             });
 
             if (result.success) {
                 nlohmann::json data;
                 data["id"] = (int64_t)result.lastInsertId;
+                data["name"] = name;
+                data["type"] = type;
+                data["streamUrl"] = streamUrl;
+                data["protocol"] = protocol;
+                data["resolution"] = resolution;
+                data["fps"] = fps;
+                data["codec"] = codec;
+                data["status"] = status;
+                data["location"] = location;
+                data["description"] = description;
+                data["deviceId"] = deviceId;
+                data["createdAt"] = getCurrentTimestamp();
+                data["updatedAt"] = getCurrentTimestamp();
                 callback(buildJsonResponse(0, "success", data, drogon::k201Created));
             } else {
                 callback(buildErrorResponse(400, "Failed to create device: " + result.errorMessage));
