@@ -27,6 +27,7 @@ class AuthCtrl : public drogon::HttpSimpleController<AuthCtrl> {
     PATH_ADD("/api/v1/auth/register", Post);
     PATH_ADD("/api/v1/auth/refresh", Post);
     PATH_ADD("/api/v1/auth/users", Get, Put, Delete);
+    PATH_ADD("/api/v1/auth/password", Put);
     PATH_LIST_END
 };
 
@@ -38,6 +39,7 @@ class DeviceCtrl : public drogon::HttpSimpleController<DeviceCtrl> {
     PATH_ADD("/api/v1/devices", Get, Post, Put, Delete);
     PATH_ADD("/api/v1/devices/start", Post);
     PATH_ADD("/api/v1/devices/stop", Post);
+    PATH_ADD("/api/v1/devices/status", Get);
     PATH_LIST_END
 };
 
@@ -51,6 +53,9 @@ class TaskCtrl : public drogon::HttpSimpleController<TaskCtrl> {
     PATH_ADD("/api/v1/tasks/stop", Post);
     PATH_ADD("/api/v1/tasks/pause", Post);
     PATH_ADD("/api/v1/tasks/resume", Post);
+    PATH_ADD("/api/v1/tasks/metrics", Get);
+    PATH_ADD("/api/v1/tasks/config", Put);
+    PATH_ADD("/api/v1/tasks/roi", Put);
     PATH_LIST_END
 };
 
