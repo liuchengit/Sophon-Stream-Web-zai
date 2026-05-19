@@ -13,6 +13,16 @@
             "use_localtime": true,
             "log_size_limit": 10485760,
             "max_files": 5
-        }
+        },
+        "document_root": "/workspace/frontend/dist/",
+        "home_page": "index.html",
+        "use_implicit_pages": false,
+        "enable_session": false
+    },
+    "cors": {
+        "origins": ["*"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "headers": ["Content-Type", "Authorization", "X-Requested-With"],
+        "max_age": "86400"
     }
 }

@@ -27,25 +27,25 @@ export function fetchPlugins(params?: Record<string, any>) {
 }
 
 export function fetchPlugin(id: number) {
-  return get<Plugin>(`/plugins/${id}`)
+  return get<Plugin>('/plugins', { id })
 }
 
 export function installPlugin(data: { path: string } | FormData) {
-  return post<Plugin>('/plugins/install', data)
+  return post<Plugin>('/plugins/install', data as any)
 }
 
 export function updatePlugin(id: number, data: Partial<PluginFormData>) {
-  return put<Plugin>(`/plugins/${id}`, data)
+  return put<Plugin>('/plugins', { ...data, id })
 }
 
 export function deletePlugin(id: number) {
-  return del(`/plugins/${id}`)
+  return del('/plugins', { id })
 }
 
 export function activatePlugin(id: number) {
-  return post(`/plugins/${id}/activate`)
+  return post('/plugins/activate', { id })
 }
 
 export function deactivatePlugin(id: number) {
-  return post(`/plugins/${id}/deactivate`)
+  return post('/plugins/deactivate', { id })
 }

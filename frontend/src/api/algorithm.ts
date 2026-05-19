@@ -31,7 +31,7 @@ export function fetchAlgorithms(params?: Record<string, any>) {
 }
 
 export function fetchAlgorithm(id: number) {
-  return get<Algorithm>(`/algorithms/${id}`)
+  return get<Algorithm>('/algorithms', { id })
 }
 
 export function createAlgorithm(data: AlgorithmFormData) {
@@ -39,15 +39,15 @@ export function createAlgorithm(data: AlgorithmFormData) {
 }
 
 export function updateAlgorithm(id: number, data: Partial<AlgorithmFormData>) {
-  return put<Algorithm>(`/algorithms/${id}`, data)
+  return put<Algorithm>('/algorithms', { ...data, id })
 }
 
 export function deleteAlgorithm(id: number) {
-  return del(`/algorithms/${id}`)
+  return del('/algorithms', { id })
 }
 
 export function validateModel(id: number) {
-  return post<{ valid: boolean; message: string }>(`/algorithms/${id}/validate`)
+  return post<{ valid: boolean; message: string }>('/algorithms/validate', { id })
 }
 
 export function getAlgorithmTypes() {

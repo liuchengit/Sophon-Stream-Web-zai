@@ -15,7 +15,6 @@ class HealthCtrl : public drogon::HttpSimpleController<HealthCtrl> {
                                         std::function<void(const HttpResponsePtr&)>&& callback) override;
     PATH_LIST_BEGIN
     PATH_ADD("/health", Get);
-    PATH_ADD("/api/v1/system/info", Get);
     PATH_LIST_END
 };
 
@@ -27,8 +26,7 @@ class AuthCtrl : public drogon::HttpSimpleController<AuthCtrl> {
     PATH_ADD("/api/v1/auth/login", Post);
     PATH_ADD("/api/v1/auth/register", Post);
     PATH_ADD("/api/v1/auth/refresh", Post);
-    PATH_ADD("/api/v1/auth/users", Get);
-    PATH_ADD("/api/v1/auth/users/:id", Put, Delete);
+    PATH_ADD("/api/v1/auth/users", Get, Put, Delete);
     PATH_LIST_END
 };
 
@@ -61,7 +59,9 @@ class AlgorithmCtrl : public drogon::HttpSimpleController<AlgorithmCtrl> {
     virtual void asyncHandleHttpRequest(const HttpRequestPtr& req,
                                         std::function<void(const HttpResponsePtr&)>&& callback) override;
     PATH_LIST_BEGIN
-    PATH_ADD("/api/v1/algorithms", Get);
+    PATH_ADD("/api/v1/algorithms", Get, Post, Put, Delete);
+    PATH_ADD("/api/v1/algorithms/types", Get);
+    PATH_ADD("/api/v1/algorithms/validate", Post);
     PATH_LIST_END
 };
 
@@ -70,9 +70,10 @@ class AlertCtrl : public drogon::HttpSimpleController<AlertCtrl> {
     virtual void asyncHandleHttpRequest(const HttpRequestPtr& req,
                                         std::function<void(const HttpResponsePtr&)>&& callback) override;
     PATH_LIST_BEGIN
-    PATH_ADD("/api/v1/alerts", Get);
+    PATH_ADD("/api/v1/alerts", Get, Put);
     PATH_ADD("/api/v1/alerts/stats", Post);
-    PATH_ADD("/api/v1/alert-rules", Get);
+    PATH_ADD("/api/v1/alerts/batch-acknowledge", Post);
+    PATH_ADD("/api/v1/alert-rules", Get, Post, Put, Delete);
     PATH_LIST_END
 };
 
@@ -83,6 +84,9 @@ class MonitorCtrl : public drogon::HttpSimpleController<MonitorCtrl> {
     PATH_LIST_BEGIN
     PATH_ADD("/api/v1/monitor/system", Get);
     PATH_ADD("/api/v1/dashboard", Get);
+    PATH_ADD("/api/v1/system/info", Get);
+    PATH_ADD("/api/v1/system/audit-logs", Get);
+    PATH_ADD("/api/v1/system/firmware", Get);
     PATH_LIST_END
 };
 
@@ -91,7 +95,10 @@ class PluginCtrl : public drogon::HttpSimpleController<PluginCtrl> {
     virtual void asyncHandleHttpRequest(const HttpRequestPtr& req,
                                         std::function<void(const HttpResponsePtr&)>&& callback) override;
     PATH_LIST_BEGIN
-    PATH_ADD("/api/v1/plugins", Get);
+    PATH_ADD("/api/v1/plugins", Get, Post, Put, Delete);
+    PATH_ADD("/api/v1/plugins/install", Post);
+    PATH_ADD("/api/v1/plugins/activate", Post);
+    PATH_ADD("/api/v1/plugins/deactivate", Post);
     PATH_LIST_END
 };
 
